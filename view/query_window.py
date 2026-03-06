@@ -1,3 +1,11 @@
+"""
+SQL Console View Module for the FDA Classifier.
+
+This module implements an advanced SQL interface using CustomTkinter,
+enabling raw query execution, dynamic data rendering in a scrollable grid,
+and multi-format report exportation.
+"""
+
 import customtkinter as ctk
 import pandas as pd
 import threading
@@ -6,7 +14,22 @@ from typing import Optional
 
 
 class QueryWindow(ctk.CTkFrame):
+    """
+    Advanced SQL console frame for database querying and reporting.
+
+    Attributes:
+        db_ctrl (DBController): Controller responsible for executing custom SQL.
+        last_df (Optional[pd.DataFrame]): Stores the result of the last successful query.
+    """
+
     def __init__(self, master, db_controller, **kwargs):
+        """
+        Initializes the SQL console with connection settings and UI defaults.
+
+        Args:
+            master: The parent widget.
+            db_controller (DBController): Orchestrator for custom database queries.
+        """
         super().__init__(master, **kwargs)
 
         self.db_ctrl = db_controller
@@ -22,7 +45,9 @@ class QueryWindow(ctk.CTkFrame):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Configures the widget hierarchy."""
+        """
+        Configures the widget hierarchy and layout for the console.
+        """
         self.lb_title = ctk.CTkLabel(
             self,
             text="SQL ADVANCED CONSOLE",
@@ -59,7 +84,9 @@ class QueryWindow(ctk.CTkFrame):
         self._create_buttons()
 
     def _setup_table_area(self):
-        """Prepares the canvas and scrollbars."""
+        """
+        Prepares the scrollable canvas and interior frame for data rendering.
+        """
         self.table_main_container = ctk.CTkFrame(self)
         self.table_main_container.pack(fill="both", expand=True, padx=20, pady=5)
 
@@ -90,8 +117,13 @@ class QueryWindow(ctk.CTkFrame):
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         )
 
-    def _handle_placeholder(self, mode):
-        """Manages helper text and color correction."""
+    def _handle_placeholder(self, mode: str):
+        """
+        Manages focus-based placeholder text for the SQL input.
+
+        Args:
+            mode (str): "in" for gaining focus, "out" for losing focus.
+        """
         current_text = self.txt_sql.get("1.0", "end-1c").strip()
 
         if mode == "in":
@@ -105,6 +137,9 @@ class QueryWindow(ctk.CTkFrame):
                 self.txt_sql.configure(text_color=self.color_placeholder)
 
     def _create_buttons(self):
+        """
+        Builds the control buttons for query execution and reporting.
+        """
         self.button_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.button_frame.pack(fill="x", padx=20, pady=(10, 20))
 
@@ -135,6 +170,9 @@ class QueryWindow(ctk.CTkFrame):
         self.btn_report.pack(side="right", padx=10)
 
     def execute_query(self):
+        """
+        Validates the SQL input and starts the execution thread.
+        """
         query_text = self.txt_sql.get("1.0", "end-1c").strip()
 
         if not query_text or query_text == self.placeholder_sql.strip():
@@ -144,25 +182,24 @@ class QueryWindow(ctk.CTkFrame):
         self._set_ui_state("disabled")
         threading.Thread(target=self._query_thread, args=(query_text,), daemon=True).start()
 
-    def _query_thread(self, query):
+    def _query_thread(self, query: str):
         """
-        Executes query in background.
-        Detailed technical errors are shown via messagebox.
+        Executes the query in a background thread and manages the state of the table.
+
+        Args:
+            query (str): The raw SQL statement to execute.
         """
         try:
-            # This triggers the 'raise' from your db_controller
             df_result = self.db_ctrl.get_custom_query(query)
             self.last_df = df_result
             self.after(0, lambda: self.load_dynamic_table(df_result))
 
         except ValueError as ve:
-            # Specifically for "Empty Results" or logic errors
             msg = str(ve)
             self.after(0, lambda: messagebox.showwarning("No Data", f"⚠️ {msg}"))
             self.after(0, lambda: self.load_dynamic_table(pd.DataFrame()))
 
         except Exception as e:
-            # Specifically for SQL syntax errors or connection failures
             error_msg = str(e)
             self.after(0, lambda: messagebox.showerror("Database Error", f"Execution failed:\n\n{error_msg}"))
             self.after(0, lambda: self.load_dynamic_table(pd.DataFrame()))
@@ -170,8 +207,13 @@ class QueryWindow(ctk.CTkFrame):
         finally:
             self.after(0, lambda: self._set_ui_state("normal"))
 
-    def load_dynamic_table(self, df):
-        """Renders the dataframe into the UI grid."""
+    def load_dynamic_table(self, df: pd.DataFrame):
+        """
+        Renders a Pandas DataFrame into the scrollable UI grid.
+
+        Args:
+            df (pd.DataFrame): The data to be displayed in the console.
+        """
         for widget in self.table_interior_frame.winfo_children():
             widget.destroy()
 
@@ -203,7 +245,9 @@ class QueryWindow(ctk.CTkFrame):
                 ).grid(row=row_idx, column=col_idx, padx=1, pady=1, sticky="nsew")
 
     def generate_report(self):
-        """Exports the last successful query result to a file."""
+        """
+        Saves the result of the last successful query to a CSV or Excel file.
+        """
         if self.last_df is None or self.last_df.empty:
             messagebox.showwarning("Warning", "There is no data loaded to export.")
             return
@@ -221,11 +265,12 @@ class QueryWindow(ctk.CTkFrame):
                     self.last_df.to_csv(path, sep=",", index=False, encoding="utf-8-sig")
                 messagebox.showinfo("Success", "Report saved successfully.")
             except Exception as e:
-                # Catching write errors (e.g. file is open in Excel)
                 messagebox.showerror("Export Error", f"Could not save file:\n{e}")
 
     def clean_fields(self):
-        """Clears the UI and restores placeholder state."""
+        """
+        Resets the console input, results table, and temporary memory.
+        """
         for widget in self.table_interior_frame.winfo_children():
             widget.destroy()
         self.last_df = None
@@ -235,7 +280,10 @@ class QueryWindow(ctk.CTkFrame):
         self.txt_sql.configure(text_color=self.color_placeholder)
         self.focus_set()
 
-    def _set_ui_state(self, state):
+    def _set_ui_state(self, state: str):
+        """
+        Toggles the interactive state of the control buttons.
+        """
         s = "normal" if state == "normal" else "disabled"
         self.btn_execute.configure(state=s)
         self.btn_report.configure(state=s)

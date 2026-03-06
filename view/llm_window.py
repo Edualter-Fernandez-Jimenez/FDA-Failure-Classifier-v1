@@ -1,3 +1,11 @@
+"""
+GUI View Module for the FDA Classifier.
+
+This module implements the user interface using CustomTkinter, providing
+fields for case entry, asynchronous execution of AI analysis, and
+interaction with the database controller.
+"""
+
 import customtkinter as ctk
 import threading
 import json
@@ -5,7 +13,24 @@ from tkinter import messagebox
 from typing import List, Dict, Any
 
 class LLMWindow(ctk.CTkFrame):
+    """
+    Main UI frame for FDA Failure Analysis and classification.
+
+    Attributes:
+        llm_ctrl (LLMModelController): Controller for AI logic.
+        db_ctrl (DBController): Controller for database interactions.
+        last_result (List[Dict[str, Any]]): Storage for the most recent classification data.
+    """
+
     def __init__(self, master, llm_controller, db_controller, **kwargs):
+        """
+        Initializes the UI components and sets up placeholders.
+
+        Args:
+            master: The parent widget.
+            llm_controller (LLMModelController): Orchestrator for the LLM.
+            db_controller (DBController): Data access orchestrator.
+        """
         super().__init__(master, **kwargs)
 
         self.llm_ctrl = llm_controller
@@ -23,6 +48,9 @@ class LLMWindow(ctk.CTkFrame):
         self._setup_ui()
 
     def _setup_ui(self):
+        """
+        Builds the layout of the window, including inputs and action buttons.
+        """
         self.lb_title = ctk.CTkLabel(self, text="FDA FAILURE ANALYSIS", font=ctk.CTkFont(size=20, weight="bold"))
         self.lb_title.pack(pady=(20, 10))
 
@@ -44,7 +72,17 @@ class LLMWindow(ctk.CTkFrame):
 
         self._create_buttons()
 
-    def _create_input_section(self, title, placeholder):
+    def _create_input_section(self, title: str, placeholder: str) -> ctk.CTkTextbox:
+        """
+        Creates a labeled text input section with placeholder behavior.
+
+        Args:
+            title (str): The label text for the section.
+            placeholder (str): The ghost text to show when empty.
+
+        Returns:
+            ctk.CTkTextbox: The configured textbox instance.
+        """
         label = ctk.CTkLabel(self, text=title, anchor="w")
         label.pack(fill="x", padx=20, pady=(10, 0))
 
@@ -56,7 +94,15 @@ class LLMWindow(ctk.CTkFrame):
         textbox.bind("<FocusOut>", lambda e: self._handle_placeholder(textbox, placeholder, "out"))
         return textbox
 
-    def _handle_placeholder(self, textbox, placeholder, mode):
+    def _handle_placeholder(self, textbox: ctk.CTkTextbox, placeholder: str, mode: str):
+        """
+        Manages focus events to show/hide placeholder text.
+
+        Args:
+            textbox (ctk.CTkTextbox): The target textbox.
+            placeholder (str): The text to toggle.
+            mode (str): Either "in" (focus gained) or "out" (focus lost).
+        """
         current_text = textbox.get("1.0", "end-1c").strip()
         if mode == "in":
             if current_text == placeholder:
@@ -68,6 +114,9 @@ class LLMWindow(ctk.CTkFrame):
                 textbox.configure(text_color=self.color_placeholder)
 
     def _create_buttons(self):
+        """
+        Initializes the action buttons for cleaning, executing, and saving data.
+        """
         self.button_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.button_frame.pack(fill="x", padx=20, pady=10)
 
@@ -82,9 +131,10 @@ class LLMWindow(ctk.CTkFrame):
         self.btn_save = ctk.CTkButton(self.button_frame, text="Save to DB", command=self.save_data)
         self.btn_save.pack(side="right")
 
-    # --- DATA LOGIC AND ERROR HANDLING ---
-
     def run_analysis(self):
+        """
+        Validates UI inputs and launches the AI analysis in a background thread.
+        """
         case_code = self.entry_case.get().strip()
         text1 = self.entry1.get("1.0", "end-1c").strip()
         text2 = self.entry2.get("1.0", "end-1c").strip()
@@ -106,10 +156,14 @@ class LLMWindow(ctk.CTkFrame):
             daemon=True
         ).start()
 
-    def _run_analysis_thread(self, case_code, text1, text2):
+    def _run_analysis_thread(self, case_code: str, text1: str, text2: str):
         """
-        Executes logic and catches exceptions.
-        Detailed errors are shown ONLY in the messagebox.
+        Background thread worker for LLM processing to prevent UI freezing.
+
+        Args:
+            case_code (str): The unique identifier for the case.
+            text1 (str): Primary problem description.
+            text2 (str): Secondary investigation context.
         """
         try:
             # 1. Orchestrator call
@@ -137,7 +191,16 @@ class LLMWindow(ctk.CTkFrame):
         finally:
             self.after(0, lambda: self._set_ui_state("normal"))
 
-    def _process_and_display(self, data, case_code, text1, text2):
+    def _process_and_display(self, data: List[Dict], case_code: str, text1: str, text2: str):
+        """
+        Maps AI response keys to database columns and updates the UI output.
+
+        Args:
+            data (List[Dict]): The raw parsed JSON list from the AI.
+            case_code (str): The case identifier.
+            text1 (str): Original input 1.
+            text2 (str): Original input 2.
+        """
         mapping = {
             "FDA_CODE": "ia_fda_cd",
             "TERM": "ia_fda_term_desc",
@@ -166,7 +229,9 @@ class LLMWindow(ctk.CTkFrame):
         self.after(0, lambda: self.refresh_output(display_text))
 
     def save_data(self):
-        """Handles saving by catching potential insertion or DB integrity errors."""
+        """
+        Persists the current analysis result into the database.
+        """
         if not self.last_result:
             messagebox.showwarning("Attention", "⚠️ No results to save. Run an analysis first.")
             return
@@ -183,13 +248,19 @@ class LLMWindow(ctk.CTkFrame):
         except Exception as e:
             messagebox.showerror("Database Error", f"Could not complete DB operation:\n\n{str(e)}")
 
-    def refresh_output(self, text):
+    def refresh_output(self, text: str):
+        """
+        Updates the read-only output textbox with new text.
+        """
         self.tb_output.configure(state="normal")
         self.tb_output.delete("1.0", "end")
         self.tb_output.insert("1.0", text)
         self.tb_output.configure(state="disabled")
 
     def clean_fields(self):
+        """
+        Resets all input fields and the results buffer to their initial state.
+        """
         self._set_ui_state("normal")
         self.entry_case.delete(0, "end")
 
@@ -202,7 +273,10 @@ class LLMWindow(ctk.CTkFrame):
         self.last_result = []
         self.focus_set()
 
-    def _set_ui_state(self, state):
+    def _set_ui_state(self, state: str):
+        """
+        Enables or disables interactive widgets during processing.
+        """
         widgets = [self.entry1, self.entry2, self.entry_case, self.btn_execute, self.btn_save, self.btn_clean]
         for w in widgets:
             w.configure(state=state)

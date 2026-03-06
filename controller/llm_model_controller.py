@@ -1,35 +1,63 @@
-from typing import Optional
+"""
+LLM Model Controller Module for the FDA Classifier.
+
+This module coordinates the interaction between the database context and
+the Language Model, ensuring that classifications are grounded in the
+official FDA Annex C catalog.
+"""
+
 from network.lm_studio_service import LLMClient
 import pandas as pd
 
 class LLMModelController:
+    """
+    Coordinator for the Language Model operations and prompt engineering.
+
+    Attributes:
+        llm (LLMClient): Instance of the network client for LLM communication.
+        db_ctrl (DBController): Instance of the database controller for context retrieval.
+    """
+
     def __init__(self, llm_client: LLMClient, db_controller):
         """
-        Coordinador del modelo de lenguaje.
-        :param llm_client: Instancia de nuestro cliente de red.
-        :param db_controller: Instancia del controlador de BD para obtener contexto.
+        Initializes the controller with an LLM client and a database controller.
+
+        Args:
+            llm_client (LLMClient): The network client instance.
+            db_controller (DBController): The DB controller instance to fetch context.
         """
         self.llm = llm_client
         self.db_ctrl = db_controller
 
     def _build_system_context(self) -> str:
         """
-        Construye el string de contexto (System Prompt) basado en los datos de la BD.
-        Lanza excepciones ante cualquier inconsistencia de datos para evitar alucinaciones.
+        Constructs the System Prompt based on Annex C data from the database.
+
+        This method implements strict data integrity checks to prevent LLM
+        hallucinations by ensuring the reference catalog is complete and valid.
+
+        Returns:
+            str: The fully formatted system context including the reference catalog.
+
+        Raises:
+            ValueError: If the catalog is empty or contains corrupted records.
+            RuntimeError: If an error occurs during data retrieval or formatting.
         """
         try:
-            # Obtenemos datos (este ya lanza su propio RuntimeError si la DB falla)
+            # Fetch data (propagates RuntimeError if DB fails)
             df_context = self.db_ctrl.get_fda_annex_c()
 
             if df_context.empty:
-                raise ValueError("El catálogo del Anexo C está vacío. No se puede proceder con la clasificación.")
+                raise ValueError("The Annex C catalog is empty. Classification cannot proceed.")
 
-            # Encabezado del Prompt
+            # Prompt Header
             header = (
                 "### PROFILE\n"
-                "You will act as a Medical Device Compliance and Classification Specialist (FDA Expert). Your accuracy is critical to patient safety.\n"
+                "You will act as a Medical Device Compliance and Classification Specialist (FDA Expert). "
+                "Your accuracy is critical to patient safety.\n"
                 "### TASK\n"
-                "Your objective is to analyze a 'Problem Description' for a medical device and classify it using ONLY the Annex C of FDA MDR codes provided below.\n"
+                "Your objective is to analyze a 'Problem Description' for a medical device and classify "
+                "it using ONLY the Annex C of FDA MDR codes provided below.\n"
                 "### GOLDEN RULES\n"
                 "1. Do not use external knowledge. Use only the attached Annex C catalog.\n"
                 "2. If the description is ambiguous, prioritize the code whose DEFINITION field is most specific.\n"
@@ -39,16 +67,16 @@ class LLMModelController:
 
             catalog_entries = []
             for index, row in df_context.iterrows():
-                # Validación estricta de integridad de datos
+                # Strict validation of data integrity
                 fda_code = row.get('fda_cd')
 
-                # Si falta el código FDA o la definición, la integridad del catálogo está comprometida
+                # If FDA code or definition is missing, catalog integrity is compromised
                 if not fda_code or fda_code == "N/A" or pd.isna(fda_code):
-                    raise ValueError(f"❌ Data integrity violated: Critical data is missing from the row {index} (Invalid FDA_CODE).")
+                    raise ValueError(f"❌ Data integrity violated: Critical data missing at row {index} (Invalid FDA_CODE).")
 
                 term = row.get('lvl_3_term') or row.get('lvl_2_term') or row.get('lvl_1_term') or "N/A"
                 if term == "N/A":
-                    raise ValueError(f"❌ Data integrity violated: No valid term was found for the code {fda_code}.")
+                    raise ValueError(f"❌ Data integrity violated: No valid term found for code {fda_code}.")
 
                 entry = (
                     f"TERM: {term}\n"
@@ -73,8 +101,18 @@ class LLMModelController:
 
     def process_classification(self, problem_title: str, problem_desc: str) -> str:
         """
-        Orquesta la consulta al LLM (LM Studio).
-        Lanza excepciones si falla la preparación del contexto o la comunicación con la IA.
+        Orchestrates the classification request to the LLM (LM Studio).
+
+        Args:
+            problem_title (str): Short title or summary of the medical device issue.
+            problem_desc (str): Detailed description of the technical problem.
+
+        Returns:
+            str: The JSON-formatted classification result from the AI.
+
+        Raises:
+            ValueError: If input fields are empty or invalid.
+            RuntimeError: If the AI returns an empty response or communication fails.
         """
         try:
             sys_context = self._build_system_context()
