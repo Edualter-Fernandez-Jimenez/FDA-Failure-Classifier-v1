@@ -1,0 +1,14 @@
+[
+  {
+    "response_cd": 1,
+    "case_cd":"EVT-0001",
+    "event_summary_desc": "It was reported that there was a video output issue. The tablet and rear display were showing an image, but the external output was not. No patient complications reported.",
+    "investigation_desc": "per field service engineer (FSE), â€œDue to a fiber optic cable break, we replaced it with a new cable. After the work, we performed an operational check and confirmed that there were no issues. With the above, the work is considered complete.",
+    "ia_fda_cd": "628",
+    "ia_fda_term_desc": "COMMUNICATIONS PROBLEM IDENTIFIED",
+    "ia_fda_deff_desc": "DEVICES THAT DO NOT SEND OR RECEIVE ADEQUATE SIGNALS (THIS SPEAKS TO THE INTEROPERABILITY BETWEEN DEVICES).",
+    "ia_problem_explanation_desc": "THE ISSUE DESCRIBED INVOLVES A PROBLEM WITH EXTERNAL OUTPUT, WHERE THE VIDEO WAS VISIBLE ON THE TABLET AND REAR DISPLAY BUT NOT ON AN EXTERNAL DEVICE. THIS INDICATES A COMMUNICATIONS PROBLEM BETWEEN THE INTERNAL SYSTEM AND THE EXTERNAL OUTPUT.",
+    "ia_code_explanation_desc": "THIS CODE IS CHOSEN BECAUSE IT SPECIFICALLY ADDRESSES ISSUES RELATED TO THE INTEROPERABILITY BETWEEN DEVICES, WHICH IN THIS CASE INVOLVES THE FAILURE OF SIGNALS TO BE ADEQUATELY TRANSMITTED FROM THE INTERNAL SYSTEM TO THE EXTERNAL DISPLAY.",
+    "create_dt": "currentDate()"
+  }
+]
