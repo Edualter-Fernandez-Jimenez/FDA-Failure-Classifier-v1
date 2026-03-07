@@ -1,4 +1,8 @@
 """
+developer: Brian Rodríguez Orozco
+email: brian.rodriguez1@ulatina.net or rodriguezbrian2302@gmail.com
+id: 20200110702
+
 SQL Console View Module for the FDA Classifier.
 
 This module implements an advanced SQL interface using CustomTkinter,

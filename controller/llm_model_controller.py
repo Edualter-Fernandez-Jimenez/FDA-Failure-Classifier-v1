@@ -1,4 +1,8 @@
 """
+developer: Brian Rodríguez Orozco
+email: brian.rodriguez1@ulatina.net or rodriguezbrian2302@gmail.com
+id: 20200110702
+
 LLM Model Controller Module for the FDA Classifier.
 
 This module coordinates the interaction between the database context and

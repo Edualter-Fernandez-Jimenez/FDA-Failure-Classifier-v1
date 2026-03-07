@@ -1,4 +1,8 @@
 """
+developer: Brian Rodríguez Orozco
+email: brian.rodriguez1@ulatina.net or rodriguezbrian2302@gmail.com
+id: 20200110702
+
 Main Application Entry Point for the FDA Classifier.
 
 This module initializes the core technical layers, orchestrates dependency

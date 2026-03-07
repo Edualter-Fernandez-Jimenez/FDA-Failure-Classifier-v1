@@ -1,4 +1,8 @@
 """
+developer: Brian Rodríguez Orozco
+email: brian.rodriguez1@ulatina.net or rodriguezbrian2302@gmail.com
+id: 20200110702
+
 LLM Client Module for the FDA Classifier.
 
 This module manages the interface between the application and Large Language Models

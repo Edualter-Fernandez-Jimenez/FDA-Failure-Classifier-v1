@@ -1,4 +1,8 @@
 """
+developer: Brian Rodríguez Orozco
+email: brian.rodriguez1@ulatina.net or rodriguezbrian2302@gmail.com
+id: 20200110702
+
 Database Controller Module for the FDA Classifier.
 
 This module acts as the orchestration layer between the raw database operations

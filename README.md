@@ -1,5 +1,11 @@
 # FDA Failure Classifier 🩺🤖
 
+developer: Brian Rodríguez Orozco
+
+email: brian.rodriguez1@ulatina.net or rodriguezbrian2302@gmail.com
+
+id: 20200110702
+
 An AI-driven medical device classification system built with **Python**, following a strict **MVC (Model-View-Controller)** architectural pattern. This tool leverages local Large Language Models (LLMs) to map technical problem descriptions to official **FDA MDR Annex C** codes provided by a relational database.
 
 

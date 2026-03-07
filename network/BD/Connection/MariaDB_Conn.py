@@ -1,4 +1,8 @@
 """
+developer: Brian Rodríguez Orozco
+email: brian.rodriguez1@ulatina.net or rodriguezbrian2302@gmail.com
+id: 20200110702
+
 Database Connection Module for the FDA Classifier.
 
 This module handles the lifecycle of the MariaDB connection, ensuring

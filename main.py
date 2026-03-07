@@ -1,4 +1,8 @@
 """
+developer: Brian Rodríguez Orozco
+email: brian.rodriguez1@ulatina.net or rodriguezbrian2302@gmail.com
+id: 20200110702
+
 Application Bootstrap Script.
 
 This is the main execution file that launches the FDA Failure Classifier.
