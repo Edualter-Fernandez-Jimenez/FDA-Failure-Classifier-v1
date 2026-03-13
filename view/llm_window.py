@@ -176,6 +176,7 @@ class LLMWindow(ctk.CTkFrame):
             # 2. JSON Parsing attempt
             try:
                 data = json.loads(raw_result)
+
             except json.JSONDecodeError:
                 raise RuntimeError("The AI responded with an invalid format (Non-JSON).")
 
@@ -225,9 +226,11 @@ class LLMWindow(ctk.CTkFrame):
             })
             self.last_result.append(new_item)
 
-            display_text += (f"CODE: {new_item.get('ia_fda_cd')}\n"
-                             f"TERM: {new_item.get('ia_fda_term_desc')}\n"
-                             f"JUSTIFICATION: {new_item.get('ia_code_explanation_desc')}\n"
+            display_text += (f"CODE: {new_item.get('ia_fda_cd', '').capitalize()}\n"
+                             f"TERM: {new_item.get('ia_fda_term_desc', '').capitalize()}\n"
+                             f"DEFINITION: {new_item.get('ia_fda_deff_desc', '').capitalize()}\n"
+                             f"PROBLEM_EXPLANATION: {new_item.get('ia_problem_explanation_desc', '').capitalize()}\n"
+                             f"CODE_EXPLANATION: {new_item.get('ia_code_explanation_desc', '').capitalize()}\n"
                              f"{'-' * 40}\n")
 
         self.after(0, lambda: self.refresh_output(display_text))

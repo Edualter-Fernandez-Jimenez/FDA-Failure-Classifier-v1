@@ -55,17 +55,15 @@ class LLMModelController:
                 raise ValueError("The Annex C catalog is empty. Classification cannot proceed.")
 
             # Prompt Header
-            header = (
-                "### PROFILE\n"
-                "You will act as a Medical Device Compliance and Classification Specialist (FDA Expert). "
-                "Your accuracy is critical to patient safety.\n"
-                "### TASK\n"
-                "Your objective is to analyze a 'Problem Description' for a medical device and classify "
-                "it using ONLY the Annex C of FDA MDR codes provided below.\n"
-                "### GOLDEN RULES\n"
-                "1. Do not use external knowledge. Use only the attached Annex C catalog.\n"
-                "2. If the description is ambiguous, prioritize the code whose DEFINITION field is most specific.\n"
-                "### REFERENCE CATALOG (APPENDIX C)\n"
+            header = ("### PROFILE\n"
+                   "You will act as a Medical Device Compliance and Classification Specialist (FDA Expert). Your accuracy is critical to patient safety.\n"
+                   "### TASK\n"
+                   "Your objective is to analyze a 'Problem Description' for a medical device and classify it using ONLY the Annex C of FDA MDR codes provided below.\n"
+                   "### GOLDEN RULES\n1. Do not use external knowledge. Use only the attached Annex C catalog.\n"
+                   "2. If the description is ambiguous, prioritize the code whose\n"
+                   "DEFINITION"
+                   "\nfield is most specific regarding the technical failure.\n"
+                   "### REFERENCE CATALOG (APPENDIX C)\n"
             )
             header += "=" * 50 + "\n\n"
 
@@ -91,11 +89,18 @@ class LLMModelController:
                 catalog_entries.append(entry)
 
             footer = (
-                "\n### OUTPUT FORMAT (STRICT)\n"
-                "Returns only a JSON array with the best match. Do not add introductions or conclusions.\n"
-                "Format:\n"
-                "[\n {\n  'FDA_CODE': 'XXX', 'TERM': 'Term Name', 'DEFINITION': '...', \n"
-                "  'PROBLEM_EXPLANATION': '...', 'CODE_EXPLANATION': '...' \n }\n]"
+                "### OUTPUT FORMAT (STRICT)\n"
+                    "Returns only a JSON array with the best match. Do not add introductions or conclusions.\n"
+                    "Format:\n"
+                    "[\n"
+                    "{\n"
+                    "'FDA_CODE': 'XXX',\n"
+                    "'TERM': 'Term Name',\n"
+                    "'DEFINITION': 'Original Definition',\n"
+                    "'PROBLEM_EXPLANATION': 'Brief summary of why this problem fits here',\n"
+                    "'CODE_EXPLANATION': 'Technical justification for the code choice'\n"
+                    "}\n"
+                    "]"
             )
 
             return header + "\n".join(catalog_entries) + footer
@@ -124,7 +129,7 @@ class LLMModelController:
             if not problem_title.strip() or not problem_desc.strip():
                 raise ValueError("❌ The title or description of the problem cannot be empty.")
 
-            user_prompt = f"### CASE TO ANALYZE\nTITLE: {problem_title}\nDESCRIPTION: {problem_desc}"
+            user_prompt = f"{problem_title}\n{problem_desc}"
 
             result = self.llm.get_classification(sys_context, user_prompt)
 
